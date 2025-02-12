@@ -50,7 +50,7 @@
             padding: 20px;
             border-radius: 10px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
@@ -65,6 +65,15 @@
         .highlight {
             background-color: #2a2a2a;
             transition: background-color 0.5s ease;
+        }
+
+        .banner {
+            background-color: #00BFFF;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px 5px 0 0;
+            text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -88,7 +97,7 @@
                 return;
             }
 
-            clearInterval(refreshInterval); // Clear any previous intervals
+            clearInterval(refreshInterval);
 
             const fetchData = async () => {
                 try {
@@ -104,7 +113,10 @@
                             const isNewTx = newTxid !== lastTxid;
                             lastTxid = newTxid;
 
+                            const transactionType = data.last_transaction.senders.includes(address) ? "Sent" : "Received";
+
                             transactionDetails = `
+                                <div class="banner">Last Transaction (${transactionType})</div>
                                 <p class="${isNewTx ? 'highlight' : ''}"><span class="green">TXID:</span> ${newTxid}</p>
                                 <p><span class="green">Sender(s):</span> ${data.last_transaction.senders.join(", ")}</p>
                                 <p><span class="green">Amount Received:</span> ${data.last_transaction.amount_received_btc} BTC (${data.last_transaction.amount_received_usd})</p>
@@ -126,7 +138,7 @@
             };
 
             await fetchData();
-            refreshInterval = setInterval(fetchData, 10000); // Refresh every 10 seconds
+            refreshInterval = setInterval(fetchData, 10000);
         }
     </script>
 </body>
