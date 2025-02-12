@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Balance Tracker</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #E0E0E0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #00BFFF;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #00BFFF;
+            border-radius: 5px;
+            margin: 10px 0;
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00BFFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #008CBA;
+        }
+
+        .result {
+            margin-top: 20px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .blue {
+            color: #00BFFF;
+        }
+
+        .green {
+            color: #00FF7F;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bitcoin Balance Tracker</h1>
+    <input type="text" id="address" placeholder="Enter Bitcoin Address">
+    <button onclick="checkBalance()">Check Balance</button>
+
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        async function checkBalance() {
+            const address = document.getElementById('address').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!address) {
+                alert("Please enter a Bitcoin address.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/balance?address=${address}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    let transactionDetails = "<p>No transactions found.</p>";
+                    if (data.last_transaction !== "No transactions found") {
+                        transactionDetails = `
+                            <p><span class="green">TXID:</span> ${data.last_transaction.txid}</p>
+                            <p><span class="green">Sender(s):</span> ${data.last_transaction.senders.join(", ")}</p>
+                            <p><span class="green">Amount Received:</span> ${data.last_transaction.amount_received_btc} BTC (${data.last_transaction.amount_received_usd})</p>
+                            <p><span class="green">Confirmations:</span> ${data.last_transaction.confirmations}</p>
+                        `;
+                    }
+
+                    resultDiv.innerHTML = `
+                        <p><span class="blue">Address:</span> ${data.address}</p>
+                        <p><span class="blue">Balance:</span> ${data.balance_btc} BTC (${data.balance_usd})</p>
+                        ${transactionDetails}
+                    `;
+                }
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+                resultDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
