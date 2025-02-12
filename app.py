@@ -1,10 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import requests
-
-# ANSI escape codes for colors (for future CLI use if needed)
-GREEN = '\033[92m'
-BLUE = '\033[94m'
-RESET = '\033[0m'
 
 app = Flask(__name__)
 
@@ -84,6 +79,11 @@ def get_btc_usd_price():
     except requests.exceptions.RequestException:
         return None
 
+@app.route('/')
+def home():
+    with open('index.html') as file:
+        return render_template_string(file.read())
+
 @app.route('/balance', methods=['GET'])
 def balance():
     address = request.args.get('address')
@@ -117,4 +117,3 @@ def balance():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
-
