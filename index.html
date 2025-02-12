@@ -61,6 +61,11 @@
         .green {
             color: #00FF7F;
         }
+
+        .highlight {
+            background-color: #2a2a2a;
+            transition: background-color 0.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +76,9 @@
     <div id="result" class="result" style="display: none;"></div>
 
     <script>
+        let lastTxid = "";
+        let refreshInterval;
+
         async function checkBalance() {
             const address = document.getElementById('address').value;
             const resultDiv = document.getElementById('result');
@@ -80,34 +88,45 @@
                 return;
             }
 
-            try {
-                const response = await fetch(`/balance?address=${address}`);
-                const data = await response.json();
+            clearInterval(refreshInterval); // Clear any previous intervals
 
-                if (data.error) {
-                    resultDiv.innerHTML = `<p>${data.error}</p>`;
-                } else {
-                    let transactionDetails = "<p>No transactions found.</p>";
-                    if (data.last_transaction !== "No transactions found") {
-                        transactionDetails = `
-                            <p><span class="green">TXID:</span> ${data.last_transaction.txid}</p>
-                            <p><span class="green">Sender(s):</span> ${data.last_transaction.senders.join(", ")}</p>
-                            <p><span class="green">Amount Received:</span> ${data.last_transaction.amount_received_btc} BTC (${data.last_transaction.amount_received_usd})</p>
-                            <p><span class="green">Confirmations:</span> ${data.last_transaction.confirmations}</p>
+            const fetchData = async () => {
+                try {
+                    const response = await fetch(`/balance?address=${address}`);
+                    const data = await response.json();
+
+                    if (data.error) {
+                        resultDiv.innerHTML = `<p>${data.error}</p>`;
+                    } else {
+                        let transactionDetails = "<p>No transactions found.</p>";
+                        if (data.last_transaction !== "No transactions found") {
+                            const newTxid = data.last_transaction.txid;
+                            const isNewTx = newTxid !== lastTxid;
+                            lastTxid = newTxid;
+
+                            transactionDetails = `
+                                <p class="${isNewTx ? 'highlight' : ''}"><span class="green">TXID:</span> ${newTxid}</p>
+                                <p><span class="green">Sender(s):</span> ${data.last_transaction.senders.join(", ")}</p>
+                                <p><span class="green">Amount Received:</span> ${data.last_transaction.amount_received_btc} BTC (${data.last_transaction.amount_received_usd})</p>
+                                <p><span class="green">Confirmations:</span> ${data.last_transaction.confirmations}</p>
+                            `;
+                        }
+
+                        resultDiv.innerHTML = `
+                            <p><span class="blue">Address:</span> ${data.address}</p>
+                            <p><span class="blue">Balance:</span> ${data.balance_btc} BTC (${data.balance_usd})</p>
+                            ${transactionDetails}
                         `;
                     }
-
-                    resultDiv.innerHTML = `
-                        <p><span class="blue">Address:</span> ${data.address}</p>
-                        <p><span class="blue">Balance:</span> ${data.balance_btc} BTC (${data.balance_usd})</p>
-                        ${transactionDetails}
-                    `;
+                    resultDiv.style.display = 'block';
+                } catch (error) {
+                    resultDiv.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+                    resultDiv.style.display = 'block';
                 }
-                resultDiv.style.display = 'block';
-            } catch (error) {
-                resultDiv.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
-                resultDiv.style.display = 'block';
-            }
+            };
+
+            await fetchData();
+            refreshInterval = setInterval(fetchData, 10000); // Refresh every 10 seconds
         }
     </script>
 </body>
